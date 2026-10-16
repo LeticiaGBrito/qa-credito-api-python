@@ -1,0 +1,21 @@
+{
+  "version": "0.2",
+  "language": "en,pt_BR",
+  "words": [
+    "booleana",
+    "invalidos",
+    "maximo",
+    "minimo",
+    "numerica",
+    "pycache",
+    "pytest",
+    "reprovacao",
+    "solicitacao",
+    "venv"
+  ],
+  "ignorePaths": [
+    ".venv/**",
+    "**/__pycache__/**",
+    ".pytest_cache/**"
+  ]
+}
