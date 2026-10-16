@@ -9,6 +9,19 @@ pytest e Requests.
 A aplicação e suas regras não representam políticas reais
 de concessão de crédito e não possuem vínculo com empresas.
 
+## Acesse a API
+
+A aplicação está hospedada no Render:
+
+- [Swagger UI — testar a API pelo navegador](https://qa-credito-api-python.onrender.com/docs)
+- [Disponibilidade da aplicação](https://qa-credito-api-python.onrender.com/health)
+- [Especificação OpenAPI](https://qa-credito-api-python.onrender.com/openapi.json)
+
+No plano gratuito, o serviço pode ficar inativo quando não recebe
+acessos. A primeira requisição após esse período pode demorar.
+
+Utilize somente dados fictícios.
+
 ## Objetivo
 
 Demonstrar a transformação de requisitos em testes automatizados,
@@ -31,6 +44,7 @@ testar o serviço isoladamente e também por requisições reais à API.
 | pytest-html | Geração do relatório HTML |
 | JUnit XML | Formato de relatório para integração com ferramentas de CI |
 | GitHub Actions | Execução automática dos testes e armazenamento dos relatórios |
+| Render | Hospedagem da API e configuração de deploy após os checks da CI |
 
 As dependências diretas estão registradas em `requirements.txt`
 e `requirements-dev.txt`.
@@ -47,6 +61,7 @@ e `requirements-dev.txt`.
 - Documentação interativa no Swagger UI.
 - Execução automática dos testes com GitHub Actions.
 - Geração de relatórios HTML e JUnit XML.
+- Acesso público à API hospedada no Render.
 
 ## Organização dos arquivos
 
@@ -60,6 +75,7 @@ e `requirements-dev.txt`.
 | `tests/test_credito_api.py` | Testa os endpoints por requisições HTTP reais |
 | `docs/regras-de-negocio.md` | Documenta os dados de entrada e os comportamentos esperados |
 | `.github/workflows/testes.yml` | Configura a execução dos testes e o envio dos relatórios no GitHub Actions |
+| `.python-version` | Define a linha Python 3.13 para a hospedagem |
 | `pytest.ini` | Configura a descoberta dos testes e a geração dos relatórios |
 | `requirements.txt` | Registra as dependências diretas da aplicação |
 | `requirements-dev.txt` | Inclui as dependências da aplicação e acrescenta as ferramentas de testes |
@@ -116,7 +132,12 @@ e solicita seu encerramento ao final da sessão de testes.
 Não é necessário iniciar a aplicação manualmente para executar a suíte.
 Os testes não dependem de uma API externa.
 
+Na CI, os testes HTTP utilizam uma instância criada no próprio runner.
+Eles não executam requisições contra a API pública do Render.
+
 ## Pré-requisitos
+
+Para executar localmente:
 
 - Python 3.13 instalado.
 - pip disponível.
@@ -124,6 +145,9 @@ Os testes não dependem de uma API externa.
 
 O projeto foi executado localmente no Windows com Python 3.13.5
 e no ambiente Linux do GitHub Actions com Python 3.13.
+
+Para utilizar somente o Swagger público, não é necessário
+instalar o projeto.
 
 ## Preparar o ambiente
 
@@ -221,14 +245,21 @@ Para encerrar, pressione `Ctrl + C` no terminal.
 
 ## Documentação interativa
 
+### Ambiente público
+
+- [Swagger UI](https://qa-credito-api-python.onrender.com/docs)
+- [Especificação OpenAPI](https://qa-credito-api-python.onrender.com/openapi.json)
+
+### Ambiente local
+
 Com o servidor em execução:
 
-- [Swagger UI](http://127.0.0.1:8000/docs)
-- [Especificação OpenAPI](http://127.0.0.1:8000/openapi.json)
-
-Esses endereços são locais e dependem da aplicação em execução.
+- [Swagger UI local](http://127.0.0.1:8000/docs)
+- [Especificação OpenAPI local](http://127.0.0.1:8000/openapi.json)
 
 A raiz `/` não possui endpoint e retorna HTTP 404.
+Utilize `/health` para consultar a disponibilidade
+ou `/docs` para acessar o Swagger.
 
 ## Endpoints
 
@@ -323,7 +354,16 @@ utilizam o campo `detail`.
 
 ## Regras de negócio
 
-Consulte [Regras de negócio](docs/regras-de-negocio.md).
+Os critérios fictícios de aprovação são:
+
+- Idade igual ou superior a 18 anos.
+- Renda mensal igual ou superior a R$ 2.000,00.
+- Valor solicitado menor ou igual a cinco vezes a renda mensal.
+
+Todos os critérios devem ser atendidos para aprovação.
+
+Consulte as validações e os comportamentos detalhados em
+[Regras de negócio](docs/regras-de-negocio.md).
 
 ## Integração contínua — GitHub Actions
 
@@ -370,24 +410,72 @@ Os artefatos têm retenção configurada de 14 dias.
 O arquivo `resultados.xml` também está incluído para uso
 por ferramentas compatíveis com JUnit XML.
 
-### Escopo da automação
+## Hospedagem e deploy — Render
 
-Esta configuração implementa **integração contínua (CI)**:
-o código enviado é verificado automaticamente pela suíte.
+A API utiliza o ambiente nativo Python do Render.
 
-A publicação da API e o deploy automático ainda não estão
-configurados nesta versão.
+| Configuração | Valor |
+| --- | --- |
+| Repositório | `LeticiaGBrito/qa-credito-api-python` |
+| Branch | `main` |
+| Runtime | Python 3 |
+| Versão do Python | Linha 3.13, definida em `.python-version` |
+| Build Command | `pip install -r requirements.txt` |
+| Start Command | `python -m uvicorn credito.credito_api:app --host 0.0.0.0 --port $PORT` |
+| Health Check Path | `/health` |
+| Auto-Deploy | `After CI Checks Pass` |
+
+O endereço `0.0.0.0` permite que a plataforma encaminhe
+requisições à aplicação. A variável `PORT` fornece a porta
+utilizada pelo serviço.
+
+### Fluxo configurado de CI/CD
+
+1. Uma alteração é enviada à branch `main`.
+2. O GitHub Actions instala as dependências e executa os testes.
+3. O Render aguarda os checks detectados para aquele commit.
+4. Se os checks forem aprovados conforme os critérios da plataforma,
+   o Render inicia o build e o deploy.
+5. O Render verifica `/health` para avaliar a disponibilidade
+   da nova instância.
+
+Uma falha em um check detectado impede o deploy automático
+daquele commit.
+
+A primeira publicação do serviço é iniciada durante sua criação.
+Ela não comprova, sozinha, o acionamento automático após a CI.
+
+### Acompanhamento
+
+- **GitHub Actions:** resultados dos testes, logs da CI e relatórios.
+- **Render:** instalação, inicialização, health checks e status do deploy.
+
+A conclusão da CI e a conclusão da publicação são acompanhadas
+separadamente. O workflow atual não aguarda o término do deploy.
+
+O selo no README representa o resultado do workflow de testes;
+não representa a disponibilidade da API pública.
+
+### Escopo das verificações
+
+A suíte HTTP automatizada testa uma instância local no runner.
+O health check do Render verifica o endpoint `/health`.
+
+Ainda não há testes funcionais automatizados contra o endereço
+público após a publicação.
 
 ## Limites do projeto
 
-- Aplicação educacional executada localmente e durante os testes da CI.
+- Aplicação educacional com regras fictícias.
 - Sem autenticação ou persistência em banco de dados.
 - Não utiliza dados reais de clientes.
 - Não possui integração com serviços financeiros externos.
 - Não implementa uma política real de concessão de crédito.
 - Testes aprovados não significam cobertura total do código.
 - Os tempos dos testes não representam um teste de carga.
-- Sem hospedagem pública da API ou deploy automático nesta versão.
+- Hospedagem gratuita sujeita a inatividade e demora no primeiro acesso.
+- Sem testes funcionais automatizados contra o ambiente público após o deploy.
+- O workflow de CI não acompanha a conclusão da publicação no Render.
 
 ## Autora
 
