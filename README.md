@@ -1,5 +1,7 @@
 # QA Crédito API — Python
 
+[![Testes Python](https://github.com/LeticiaGBrito/qa-credito-api-python/actions/workflows/testes.yml/badge.svg?branch=main)](https://github.com/LeticiaGBrito/qa-credito-api-python/actions/workflows/testes.yml)
+
 Projeto educacional de automação de testes de uma API fictícia
 de análise de crédito, desenvolvido com Python, FastAPI,
 pytest e Requests.
@@ -28,6 +30,7 @@ testar o serviço isoladamente e também por requisições reais à API.
 | Requests | Envio de requisições HTTP nos testes automatizados |
 | pytest-html | Geração do relatório HTML |
 | JUnit XML | Formato de relatório para integração com ferramentas de CI |
+| GitHub Actions | Execução automática dos testes e armazenamento dos relatórios |
 
 As dependências diretas estão registradas em `requirements.txt`
 e `requirements-dev.txt`.
@@ -42,6 +45,8 @@ e `requirements-dev.txt`.
 - Rejeição de JSON malformado.
 - Validação do Content-Type.
 - Documentação interativa no Swagger UI.
+- Execução automática dos testes com GitHub Actions.
+- Geração de relatórios HTML e JUnit XML.
 
 ## Organização dos arquivos
 
@@ -54,9 +59,10 @@ e `requirements-dev.txt`.
 | `tests/test_analise_credito_service.py` | Testa as regras de negócio diretamente, sem requisições HTTP |
 | `tests/test_credito_api.py` | Testa os endpoints por requisições HTTP reais |
 | `docs/regras-de-negocio.md` | Documenta os dados de entrada e os comportamentos esperados |
+| `.github/workflows/testes.yml` | Configura a execução dos testes e o envio dos relatórios no GitHub Actions |
 | `pytest.ini` | Configura a descoberta dos testes e a geração dos relatórios |
 | `requirements.txt` | Registra as dependências diretas da aplicação |
-| `requirements-dev.txt` | Registra as dependências da aplicação e dos testes |
+| `requirements-dev.txt` | Inclui as dependências da aplicação e acrescenta as ferramentas de testes |
 | `cspell.json` | Configura o corretor ortográfico do editor |
 | `.gitignore` | Exclui do versionamento ambientes locais, caches e relatórios gerados |
 
@@ -87,7 +93,8 @@ Contemplam:
 - Retorno de múltiplos motivos de reprovação.
 - Campos obrigatórios ausentes ou nulos.
 - Idades inválidas, incluindo valores fracionários e booleanos.
-- Valores monetários nulos, negativos ou com precisão inválida.
+- Valores monetários ausentes, iguais a zero, negativos
+  ou com precisão inválida.
 - Tipos incorretos e valores não finitos.
 
 ### Testes HTTP
@@ -115,7 +122,8 @@ Os testes não dependem de uma API externa.
 - pip disponível.
 - Acesso à internet para instalar as dependências.
 
-O projeto foi executado localmente com Python 3.13.5.
+O projeto foi executado localmente no Windows com Python 3.13.5
+e no ambiente Linux do GitHub Actions com Python 3.13.
 
 ## Preparar o ambiente
 
@@ -186,7 +194,8 @@ capturada para aquele teste; não significa falha.
 Os corpos das requisições e respostas não são anexados
 automaticamente ao relatório.
 
-Os relatórios são sobrescritos a cada execução e não são versionados.
+Os relatórios locais são sobrescritos a cada execução
+e não são versionados no Git.
 
 ## Executar a API manualmente
 
@@ -269,7 +278,17 @@ Resposta HTTP 200:
 Uma solicitação válida que não atende aos critérios também retorna
 HTTP 200, com status `REPROVADO` e os respectivos motivos.
 
-Exemplo de reprovação:
+Exemplo de entrada para reprovação por idade:
+
+```json
+{
+  "idade": 17,
+  "rendaMensal": 3000.00,
+  "valorSolicitado": 10000.00
+}
+```
+
+Resposta HTTP 200:
 
 ```json
 {
@@ -306,16 +325,69 @@ utilizam o campo `detail`.
 
 Consulte [Regras de negócio](docs/regras-de-negocio.md).
 
+## Integração contínua — GitHub Actions
+
+O workflow [testes.yml](.github/workflows/testes.yml) executa
+a suíte automaticamente:
+
+- A cada push, em qualquer branch.
+- Nos pull requests direcionados à branch `main`.
+- Manualmente, pela opção `Run workflow` na aba Actions.
+
+### Etapas da execução
+
+1. Download do código do repositório.
+2. Configuração do Python 3.13 em um ambiente Linux.
+3. Restauração do cache do pip, quando disponível.
+4. Instalação das dependências.
+5. Verificação da compatibilidade das dependências com `pip check`.
+6. Execução dos testes e geração dos relatórios.
+7. Disponibilização dos relatórios como artefato para download.
+
+Uma falha nos testes faz a execução da CI ser sinalizada como falha.
+
+O passo de envio dos relatórios também é executado após falhas,
+desde que o fluxo não tenha sido cancelado. Apenas os arquivos
+efetivamente gerados podem ser enviados.
+
+### Consultar as execuções
+
+Acesse [GitHub Actions](https://github.com/LeticiaGBrito/qa-credito-api-python/actions).
+
+Selecione uma execução para consultar as etapas e os logs.
+
+### Baixar os relatórios
+
+No resumo da execução:
+
+1. Localize a seção `Artifacts`.
+2. Baixe `relatorios-testes-python`.
+3. Extraia o arquivo ZIP.
+4. Abra `relatorio-testes.html` no navegador.
+
+Os artefatos têm retenção configurada de 14 dias.
+
+O arquivo `resultados.xml` também está incluído para uso
+por ferramentas compatíveis com JUnit XML.
+
+### Escopo da automação
+
+Esta configuração implementa **integração contínua (CI)**:
+o código enviado é verificado automaticamente pela suíte.
+
+A publicação da API e o deploy automático ainda não estão
+configurados nesta versão.
+
 ## Limites do projeto
 
-- Aplicação educacional executada localmente.
+- Aplicação educacional executada localmente e durante os testes da CI.
 - Sem autenticação ou persistência em banco de dados.
 - Não utiliza dados reais de clientes.
 - Não possui integração com serviços financeiros externos.
 - Não implementa uma política real de concessão de crédito.
 - Testes aprovados não significam cobertura total do código.
 - Os tempos dos testes não representam um teste de carga.
-- Integração contínua e deploy ainda não estão configurados nesta versão.
+- Sem hospedagem pública da API ou deploy automático nesta versão.
 
 ## Autora
 
