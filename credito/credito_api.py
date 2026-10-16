@@ -7,6 +7,8 @@ from fastapi import FastAPI, Request
 from fastapi.openapi.utils import get_openapi
 from fastapi.responses import HTMLResponse, JSONResponse
 
+from pathlib import Path
+
 from credito.analise_credito_service import AnaliseCreditoService
 
 
@@ -45,6 +47,20 @@ app = FastAPI(
 
 service = AnaliseCreditoService()
 
+# Caminho da interface usada pelos testes web Java e Python.
+PAGINA_WEB = Path(__file__).resolve().parent / "web" / "index.html"
+
+
+@app.get(
+    "/simulador",
+    response_class=HTMLResponse,
+    include_in_schema=False,
+)
+def exibir_simulador() -> HTMLResponse:
+    """Disponibiliza a interface educacional de análise de crédito."""
+    return HTMLResponse(
+        content=PAGINA_WEB.read_text(encoding="utf-8")
+    )
 
 # Mesma versão e configuração visual utilizadas no projeto Java.
 SWAGGER_HTML = """
