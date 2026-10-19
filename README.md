@@ -18,7 +18,7 @@ No plano gratuito, o serviço pode ficar inativo quando não recebe acessos. A p
 
 Utilize somente dados fictícios.
 
-As atualizações da documentação aparecem no endereço público após o deploy da versão correspondente.
+As atualizações aparecem no endereço público após o deploy da versão correspondente.
 
 ## Objetivo
 
@@ -34,6 +34,18 @@ Demonstrar a transformação de requisitos em testes automatizados, contemplando
 - Publicação após as verificações de CI.
 
 O projeto separa as regras de crédito da camada HTTP, permitindo testar o serviço isoladamente e também por requisições à API.
+
+## Independência dos projetos
+
+Este repositório contém a API de análise de crédito, sua documentação Swagger e os testes unitários e HTTP.
+
+O simulador e os testes de interface com Selenium estão no projeto [QA Crédito Web — Python](https://github.com/LeticiaGBrito/qa-credito-web-python), que possui aplicação, dependências e execução próprias.
+
+Não é necessário executar um projeto para utilizar ou testar o outro.
+
+O endpoint `/simulador` e a pasta `credito/web` não fazem parte desta versão do projeto de API.
+
+O Swagger permanece disponível em `/docs` como documentação interativa para consultar os endpoints e enviar requisições.
 
 ## Tecnologias e finalidade
 
@@ -81,7 +93,7 @@ As dependências diretas estão registradas em `requirements.txt` e `requirement
 | `tests/test_credito_api.py` | Testa a API, a documentação e os exemplos publicados no OpenAPI |
 | `docs/regras-de-negocio.md` | Documenta os dados de entrada e os comportamentos esperados |
 | `.github/workflows/testes.yml` | Configura a execução dos testes e o envio dos relatórios no GitHub Actions |
-| `.python-version` | Define a linha Python 3.13 para a hospedagem |
+| `.python-version` | Define a versão do Python utilizada pela hospedagem |
 | `pytest.ini` | Configura a descoberta dos testes e a geração dos relatórios |
 | `requirements.txt` | Registra as dependências diretas da aplicação |
 | `requirements-dev.txt` | Inclui as dependências da aplicação e acrescenta as ferramentas de testes |
@@ -95,7 +107,7 @@ As dependências diretas estão registradas em `requirements.txt` e `requirement
 | `AnaliseCreditoService` | Valida os dados e aplica os critérios fictícios de aprovação |
 | `ResultadoAnalise` | Representa o status e os motivos da análise em uma dataclass imutável |
 
-### Funções de documentação
+### Elementos da documentação
 
 | Elemento | Finalidade |
 | --- | --- |
@@ -112,7 +124,7 @@ A suíte atual possui **44 testes**:
 | Grupo | Quantidade |
 | --- | ---: |
 | Testes unitários das regras de negócio | 25 |
-| Testes HTTP existentes de disponibilidade e análise | 8 |
+| Testes HTTP de disponibilidade e análise | 8 |
 | Testes HTTP da documentação | 7 |
 | Testes dos exemplos publicados no Swagger | 4 |
 | **Total** | **44** |
@@ -517,7 +529,7 @@ A API utiliza o ambiente nativo Python do Render.
 | Repositório | `LeticiaGBrito/qa-credito-api-python` |
 | Branch | `main` |
 | Runtime | Python 3 |
-| Versão do Python | Linha 3.13, definida em `.python-version` |
+| Versão do Python | Definida em `.python-version` |
 | Build Command | `pip install -r requirements.txt` |
 | Start Command | `python -m uvicorn credito.credito_api:app --host 0.0.0.0 --port $PORT` |
 | Health Check Path | `/health` |
